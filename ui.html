@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CityWalk</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:            #F4F6FF;
+      --surface:       #FFFFFF;
+      --panel:         #FFFFFF;
+      --topbar:        #2B3FD4;
+      --border:        rgba(0,0,0,0.08);
+      --border-active: rgba(43,63,212,0.35);
+      --transit:       #2B3FD4;
+      --health:        #F0527A;
+      --edu:           #F59E0B;
+      --grocery:       #10B981;
+      --accent:        #2B3FD4;
+      --accent-light:  #E8EBFF;
+      --text:          #1a1f3c;
+      --muted:         #7C85AD;
+      --body:          'Nunito Sans', sans-serif;
+      --display:       'Nunito', sans-serif;
+      --sidebar:       390px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      flex-shrink: 0;
+      height: 56px;
+      background: var(--topbar);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(43,63,212,0.2);
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-logo-mark {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+    }
+
+    .topbar-logo-mark svg { width: 18px; height: 18px; }
+
+    .topbar-title {
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      font-weight: 400;
+    }
+
+    .topbar-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .tag {
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .tag-transit  { background: rgba(255,255,255,0.18); color: #fff; }
+    .tag-health   { background: rgba(240,82,122,0.25); color: #ffd0dd; }
+    .tag-edu      { background: rgba(245,158,11,0.25); color: #ffe8a3; }
+    .tag-grocery  { background: rgba(16,185,129,0.25); color: #a7f3d0; }
+
+    .topbar-spacer { flex: 1; }
+
+    .view-btn {
+      padding: 5px 13px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .view-btn.active {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    /* ── Main Split ── */
+    .workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar);
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s ease, opacity 0.3s ease;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(43,63,212,0.12) transparent;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(43,63,212,0.12); border-radius: 2px; }
+
+    .sidebar.collapsed { width: 0; opacity: 0; pointer-events: none; }
+
+    .sidebar-inner {
+      padding: 24px 20px 40px;
+      min-width: var(--sidebar);
+    }
+
+    /* ── Map Panel ── */
+    .map-panel {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Map Tabs ── */
+    .map-tabs {
+      flex-shrink: 0;
+      display: flex;
+      align-items: stretch;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+    }
+
+    .map-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 14px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+      white-space: nowrap;
+    }
+
+    .map-tab:hover { color: var(--text); }
+
+    .map-tab.active {
+      color: var(--transit);
+      border-bottom-color: var(--transit);
+    }
+
+    .map-tab .tab-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #d0d4e8;
+      flex-shrink: 0;
+    }
+    .map-tab.active .tab-dot { background: var(--transit); }
+    .map-tab .tab-dot.has-content { background: var(--grocery); }
+
+    .tab-close {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+      color: var(--muted);
+    }
+    .map-tab:hover .tab-close { opacity: 1; }
+    .tab-close:hover { background: rgba(0,0,0,0.06); color: var(--text); }
+
+    /* ── Map Content ── */
+    .map-content {
+      flex: 1;
+      position: relative;
+      background: #eef0f8;
+    }
+
+    .map-frame {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+    .map-frame.active { display: flex; flex-direction: column; }
+
+    .map-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .map-empty-icon {
+      width: 72px;
+      height: 72px;
+      background: #fff;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 16px rgba(43,63,212,0.1);
+    }
+
+    .map-empty-icon svg { width: 36px; height: 36px; color: #b8bedd; }
+
+    .map-empty p {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      color: #b8bedd;
+    }
+
+    .map-empty span {
+      font-size: 12px;
+      color: #cfd3e8;
+    }
+
+    /* dotted grid bg */
+    .map-empty::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #c8cce0 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.5;
+    }
+
+    .map-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      flex: 1;
+    }
+
+    .png-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 24px;
+    }
+
+    .map-overlay-toolbar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 5;
+    }
+
+    /* ── Resize handle ── */
+    .resize-handle {
+      width: 4px;
+      background: transparent;
+      cursor: col-resize;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 5;
+      transition: background 0.2s;
+    }
+    .resize-handle:hover,
+    .resize-handle.dragging { background: rgba(43,63,212,0.25); }
+
+    /* ── Sidebar header ── */
+    .s-header {
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .s-header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .s-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--accent-light);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .s-icon svg { width: 20px; height: 20px; color: var(--transit); }
+
+    .s-header h1 {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .s-header p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 2px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card-label {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .card-label-num {
+      width: 20px;
+      height: 20px;
+      background: var(--transit);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Input ── */
+    .input-wrap { position: relative; }
+
+    .input-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px 11px 38px;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]::placeholder { color: #b0b6cc; }
+    input[type="text"]:focus {
+      border-color: var(--transit);
+      box-shadow: 0 0 0 3px rgba(43,63,212,0.1);
+    }
+
+    .input-hint {
+      margin-top: 7px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .input-hint span { color: var(--transit); font-weight: 600; }
+
+    /* ── Buffer grid ── */
+    .buffer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .buffer-option { cursor: pointer; }
+    .buffer-option input[type="radio"] { display: none; }
+
+    .buffer-card {
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 8px;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      user-select: none;
+    }
+    .buffer-option:hover .buffer-card {
+      border-color: rgba(43,63,212,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(43,63,212,0.1);
+    }
+    .buffer-option input:checked + .buffer-card {
+      border-color: var(--transit);
+      background: var(--accent-light);
+      box-shadow: 0 4px 12px rgba(43,63,212,0.15);
+    }
+
+    .buffer-distance {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .buffer-option input:checked + .buffer-card .buffer-distance { color: var(--transit); }
+
+    .buffer-walk {
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .buffer-option input:checked + .buffer-card .buffer-walk { color: var(--transit); }
+
+    .buffer-desc {
+      font-size: 10px;
+      color: #b0b6cc;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    /* ── Output toggles ── */
+    .output-toggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .toggle-option { cursor: pointer; }
+    .toggle-option input[type="checkbox"] { display: none; }
+
+    .toggle-card {
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      user-select: none;
+    }
+    .toggle-option:hover .toggle-card { border-color: rgba(43,63,212,0.3); }
+    .toggle-option input:checked + .toggle-card {
+      border-color: var(--transit);
+      background: var(--accent-light);
+    }
+
+    .check-box {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      border: 2px solid #d0d4e8;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fff;
+    }
+    .toggle-option input:checked + .toggle-card .check-box {
+      border-color: var(--transit);
+      background: var(--transit);
+    }
+    .check-box svg { width: 9px; height: 9px; color: #fff; opacity: 0; transition: opacity 0.15s; }
+    .toggle-option input:checked + .toggle-card .check-box svg { opacity: 1; }
+    .toggle-text strong { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
+    .toggle-text span { font-size: 11px; color: var(--muted); }
+
+    /* ── Run button ── */
+    .run-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--transit);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+      box-shadow: 0 4px 14px rgba(43,63,212,0.35);
+    }
+    .run-btn:hover {
+      background: #1f31b8;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(43,63,212,0.4);
+    }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .run-btn svg { width: 16px; height: 16px; }
+
+    /* ── Status panel ── */
+    .status-panel {
+      display: none;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+    .status-panel.visible { display: block; }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d0d4e8;
+      flex-shrink: 0;
+    }
+    .status-dot.running { background: var(--edu); animation: pulse 1.2s infinite; }
+    .status-dot.done    { background: var(--grocery); }
+    .status-dot.error   { background: var(--health); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .status-title {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .log-lines {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.85;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      max-height: 110px;
+      overflow-y: auto;
+      font-family: 'Nunito Sans', sans-serif;
+    }
+    .log-lines .log-ok   { color: var(--grocery); font-weight: 600; }
+    .log-lines .log-info { color: var(--transit); }
+    .log-lines .log-err  { color: var(--health); font-weight: 600; }
+
+    /* ── Metrics ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .metric-cell {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .metric-cell .m-label {
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .metric-cell .m-value {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-cell.ideal {
+      grid-column: 1 / -1;
+      background: var(--transit);
+      border-color: transparent;
+    }
+    .metric-cell.ideal .m-label { color: rgba(255,255,255,0.7); }
+    .metric-cell.ideal .m-value { color: #fff; font-size: 28px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-mark">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="9" cy="9" r="7" stroke="#fff" stroke-width="1.5"/>
+        <circle cx="9" cy="9" r="2.5" fill="#fff"/>
+        <line x1="9" y1="2" x2="9" y2="16" stroke="#fff" stroke-width="1" opacity="0.4"/>
+        <line x1="2" y1="9" x2="16" y2="9" stroke="#fff" stroke-width="1" opacity="0.4"/>
+      </svg>
+    </div>
+    <div>
+      <div class="topbar-title">CityWalk</div>
+    </div>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="tag-row">
+    <span class="tag tag-transit">Transit</span>
+    <span class="tag tag-health">Healthcare</span>
+    <span class="tag tag-edu">Education</span>
+    <span class="tag tag-grocery">Grocery</span>
+  </div>
+  <div class="topbar-spacer"></div>
+</div>
+
+<!-- ── Workspace ── -->
+<div class="workspace" id="workspace">
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+
+    <div class="sidebar-inner">
+
+      <div class="s-header">
+        <p>See how well-connected any neighbourhood is on foot — transit, healthcare, schools, and groceries.</p>
+      </div>
+
+      <!-- Region -->
+      <div class="card">
+        <div class="card-label">
+          <span class="card-label-num">1</span>
+          Choose a region
+        </div>
+        <div class="input-wrap">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.5 4.5 8.5 4.5 8.5S12.5 9.5 12.5 6C12.5 3.51 10.49 1.5 8 1.5z"/>
+            <circle cx="8" cy="6" r="1.5"/>
+          </svg>
+          <input type="text" id="region-input" placeholder="e.g. Waterloo, Ontario, Canada" autocomplete="off" />
+        </div>
+        <p class="input-hint">Use <span>City, Province/State, Country</span> for best results</p>
+      </div>
+
+      <!-- Buffer -->
+      <div class="card">
+        <div class="card-label">
+          <span class="card-label-num">2</span>
+          Walking distance
+        </div>
+        <div class="buffer-grid">
+          <label class="buffer-option">
+            <input type="radio" name="buffer" value="400" id="buf-400" />
+            <div class="buffer-card">
+              <div class="buffer-distance">400m</div>
+              <div class="buffer-walk">5 min</div>
+            </div>
+          </label>
+          <label class="buffer-option">
+            <input type="radio" name="buffer" value="800" id="buf-800" checked />
+            <div class="buffer-card">
+              <div class="buffer-distance">800m</div>
+              <div class="buffer-walk">10 min</div>
+            </div>
+          </label>
+          <label class="buffer-option">
+            <input type="radio" name="buffer" value="1200" id="buf-1200" />
+            <div class="buffer-card">
+              <div class="buffer-distance">1.2km</div>
+              <div class="buffer-walk">15 min</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="card">
+        <div class="card-label">
+          <span class="card-label-num">3</span>
+          Output formats
+        </div>
+        <div class="output-toggle-grid">
+          <label class="toggle-option">
+            <input type="checkbox" id="out-png" checked />
+            <div class="toggle-card">
+              <div class="check-box">
+                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                  <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+                </svg>
+              </div>
+              <div class="toggle-text">
+                <strong>Static PNG</strong>
+                <span>Matplotlib, 150 dpi</span>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Run -->
+      <button class="run-btn" id="run-btn" onclick="runAnalysis()">
+        <svg viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 3.5l12.5 6.5L4 16.5V3.5z"/>
+        </svg>
+        Analyse now
+      </button>
+
+      <!-- Status -->
+      <div class="status-panel" id="status-panel">
+        <div class="status-header">
+          <div class="status-dot" id="status-dot"></div>
+          <div class="status-title" id="status-title">Idle</div>
+        </div>
+        <div class="log-lines" id="log-lines"></div>
+        <div class="metrics-grid" id="metrics-grid" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Resize Handle -->
+  <div class="resize-handle" id="resize-handle"></div>
+
+  <!-- Map Panel -->
+  <div class="map-panel" id="map-panel">
+    <div class="map-tabs" id="map-tabs">
+      <button class="map-tab active" id="tab-empty" data-target="frame-empty">
+        <div class="tab-dot"></div>
+        Awaiting analysis
+      </button>
+    </div>
+
+    <div class="map-content" id="map-content">
+      <div class="map-frame active" id="frame-empty">
+        <div class="map-empty">
+          <div class="map-empty-icon">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="18" cy="18" r="13" stroke-dasharray="5 4"/>
+              <circle cx="18" cy="18" r="5"/>
+              <line x1="18" y1="5" x2="18" y2="31"/>
+              <line x1="5" y1="18" x2="31" y2="18"/>
+            </svg>
+          </div>
+          <p>Your map will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = 'http://localhost:5000';
+
+  (() => {
+    const handle  = document.getElementById('resize-handle');
+    const sidebar = document.getElementById('sidebar');
+    let dragging  = false;
+    handle.addEventListener('mousedown', () => {
+      dragging = true;
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const ws   = document.getElementById('workspace').getBoundingClientRect();
+      const newW = Math.max(280, Math.min(600, e.clientX - ws.left));
+      sidebar.style.width = newW + 'px';
+      document.documentElement.style.setProperty('--sidebar', newW + 'px');
+    });
+    window.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
+
+  let activeTab = 'frame-empty';
+
+  function activateTab(tabId) {
+    document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.map-frame').forEach(f => f.classList.remove('active'));
+    document.getElementById(tabId.replace('frame-', 'tab-')).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    activeTab = tabId;
+  }
+
+  function addTab(id, label) {
+    const existing = document.getElementById('tab-' + id);
+    if (existing) existing.remove();
+    const existingFrame = document.getElementById('frame-' + id);
+    if (existingFrame) existingFrame.remove();
+
+    const tab = document.createElement('button');
+    tab.className = 'map-tab';
+    tab.id = 'tab-' + id;
+    tab.dataset.target = 'frame-' + id;
+    tab.innerHTML = `
+      <div class="tab-dot has-content"></div>
+      ${label}
+      <span class="tab-close" onclick="closeTab(event,'${id}')">
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/>
+        </svg>
+      </span>
+    `;
+    tab.onclick = () => activateTab('frame-' + id);
+    document.getElementById('map-tabs').appendChild(tab);
+
+    const frame = document.createElement('div');
+    frame.className = 'map-frame';
+    frame.id = 'frame-' + id;
+    document.getElementById('map-content').appendChild(frame);
+    return frame;
+  }
+
+  function closeTab(e, id) {
+    e.stopPropagation();
+    const tab   = document.getElementById('tab-' + id);
+    const frame = document.getElementById('frame-' + id);
+    const wasActive = frame && frame.classList.contains('active');
+    tab && tab.remove();
+    frame && frame.remove();
+    if (wasActive) activateTab('frame-empty');
+  }
+
+  function loadIframeTab(id, label, url) {
+    const frame = addTab(id, label);
+    frame.innerHTML = `
+      <iframe class="map-iframe" src="${url}" allowfullscreen></iframe>
+    `;
+    activateTab('frame-' + id);
+  }
+
+  function loadPngTab(id, label, url) {
+    const frame = addTab(id, label);
+    frame.innerHTML = `
+      <img class="png-preview" src="${url}" alt="Static map" />
+    `;
+    activateTab('frame-' + id);
+  }
+
+  function log(msg, type = '') {
+    const el   = document.getElementById('log-lines');
+    const line = document.createElement('div');
+    line.className = type ? `log-${type}` : '';
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function setStatus(state, title) {
+    document.getElementById('status-dot').className    = `status-dot ${state}`;
+    document.getElementById('status-title').textContent = title;
+  }
+
+  function showPanel() { document.getElementById('status-panel').classList.add('visible'); }
+
+  function resetPanel() {
+    document.getElementById('log-lines').innerHTML = '';
+    const mg = document.getElementById('metrics-grid');
+    mg.style.display = 'none';
+    mg.innerHTML = '';
+  }
+
+  function renderMetrics(m) {
+    const grid = document.getElementById('metrics-grid');
+    grid.innerHTML = `
+      <div class="metric-cell ideal">
+        <div class="m-label">All 4 services</div>
+        <div class="m-value">${m.ideal.toFixed(1)}%</div>
+      </div>
+      <div class="metric-cell">
+        <div class="m-label" style="color:var(--transit)">Transit</div>
+        <div class="m-value">${m.transit.toFixed(1)}%</div>
+      </div>
+      <div class="metric-cell">
+        <div class="m-label" style="color:var(--health)">Healthcare</div>
+        <div class="m-value">${m.healthcare.toFixed(1)}%</div>
+      </div>
+      <div class="metric-cell">
+        <div class="m-label" style="color:var(--edu)">Education</div>
+        <div class="m-value">${m.education.toFixed(1)}%</div>
+      </div>
+      <div class="metric-cell">
+        <div class="m-label" style="color:var(--grocery)">Grocery</div>
+        <div class="m-value">${m.grocery.toFixed(1)}%</div>
+      </div>
+    `;
+    grid.style.display = 'grid';
+  }
+
+  async function runAnalysis() {
+    const region  = document.getElementById('region-input').value.trim();
+    if (!region) { document.getElementById('region-input').focus(); return; }
+
+    const buffer  = document.querySelector('input[name="buffer"]:checked').value;
+    const outPng  = document.getElementById('out-png').checked;
+
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    showPanel();
+    resetPanel();
+    setStatus('running', 'Connecting to backend…');
+    log(`Region: ${region}`);
+    log(`Buffer: ${buffer}m`);
+
+    try {
+      setStatus('running', 'Fetching OSM data…');
+      log('Sending request…', 'info');
+
+      const outputs = ['html'];
+      if (outPng) outputs.push('png');
+
+      const resp = await fetch(`${API_BASE}/analyse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region, buffer: parseInt(buffer), outputs }),
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      if (data.status === 'error') {
+        setStatus('error', 'Analysis failed');
+        log(data.message, 'err');
+        btn.disabled = false;
+        return;
+      }
+
+      setStatus('done', 'Analysis complete');
+      log('OSM data retrieved', 'ok');
+      log('Coverage stats calculated', 'ok');
+      renderMetrics(data.metrics);
+
+      const regionShort = region.split(',')[0].trim();
+      if (data.files.html) {
+        log('Interactive map loaded', 'ok');
+        loadIframeTab('interactive', `${regionShort} — Interactive`, API_BASE + data.files.html);
+      }
+      if (data.files.png) {
+        log('Static map loaded', 'ok');
+        loadPngTab('static', `${regionShort} — Static PNG`, API_BASE + data.files.png);
+      }
+
+    } catch (err) {
+      setStatus('error', 'Connection failed');
+      log(`Backend unreachable at ${API_BASE}`, 'err');
+      log(err.message, 'err');
+      log('Run: python server.py', 'info');
+    }
+
+    btn.disabled = false;
+  }
+
+  document.getElementById('region-input')
+    .addEventListener('keydown', e => { if (e.key === 'Enter') runAnalysis(); });
+</script>
+</body>
+</html>
